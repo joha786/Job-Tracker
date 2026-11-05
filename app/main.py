@@ -18,6 +18,10 @@ from app.match import match
 
 BASE = Path(__file__).resolve().parent
 DB_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE.parent / 'interntrack.db'}")
+if DB_URL.startswith("postgres://"):
+    DB_URL = DB_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+elif DB_URL.startswith("postgresql://"):
+    DB_URL = DB_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 STATUSES = ["Applied", "Interview", "Offer", "Rejected"]
 
 engine = create_engine(DB_URL, connect_args={"check_same_thread": False} if DB_URL.startswith("sqlite") else {})
