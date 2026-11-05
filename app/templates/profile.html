@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}My CV · JobTrack{% endblock %}
+{% block content %}
+<main class="page narrow">
+  <h1>My CV</h1>
+  <p class="muted">Paste your CV as plain text. It is compared with each job description to produce your match score. Saving updates every existing score.</p>
+  {% if saved %}<p class="notice" role="status">CV saved. Match scores are updated.</p>{% endif %}
+  <form method="post" action="/profile" class="stack">
+    <textarea name="cv_text" rows="18" placeholder="Education, skills, projects, experience…">{{ user.cv_text }}</textarea>
+    <div><button class="btn primary" type="submit">Save CV</button> <a class="btn" href="/">Back to board</a></div>
+  </form>
+</main>
+{% endblock %}

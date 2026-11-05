@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Board · JobTrack{% endblock %}
+{% block content %}
+<main class="page">
+  {% if not has_cv %}
+  <p class="notice">Add your CV to see match scores. <a href="/profile">Add CV</a></p>
+  {% endif %}
+
+  <div class="page-head">
+    <div><h1>Your applications</h1><p class="muted">{{ stats.total }} tracked. Move each one forward as you hear back.</p></div>
+    <button class="btn primary" type="button" onclick="document.querySelector('.add').toggleAttribute('open'); document.querySelector('.add input').focus()">Add application</button>
+  </div>
+
+  <section class="stats" aria-label="Summary">
+    <div><b>{{ stats.total }}</b><span>Applications</span></div>
+    <div><b>{{ stats.response_rate }}%</b><span>Heard back</span></div>
+    <div><b>{{ stats.interviews }}</b><span>Interviews</span></div>
+    <div><b>{{ stats.offers }}</b><span>Offers</span></div>
+    <div><b>{{ stats.avg_match ~ "%" if stats.avg_match is not none else "–" }}</b><span>Average match</span></div>
+  </section>
+
+  <details class="add" {% if stats.total == 0 %}open{% endif %}>
+    <summary class="sr-only">Add application</summary>
+    <form method="post" action="/applications" class="add-form">
+      <label>Company<input name="company" required></label>
+      <label>Role<input name="role" required></label>
+      <label class="wide">Job description <small>(optional, used for the match score)</small>
+        <textarea name="job_description" rows="6"></textarea></label>
+      <button class="btn primary" type="submit">Save application</button>
+    </form>
+  </details>
+
+  <section class="board" aria-label="Application board">
+    {% for status in statuses %}
+    <div class="lane lane-{{ status|lower }}">
+      <h2>{{ status }} <span class="count">{{ board[status]|length }}</span></h2>
+      {% for a in board[status] %}
+      <article class="card">
+        <div class="card-head">
+          <div><h3>{{ a.company }}</h3><p>{{ a.role }}</p></div>
+          {% if a.score is not none %}
+          <span class="score {{ 'hi' if a.score >= 70 else 'mid' if a.score >= 40 else 'lo' }}" title="CV match">{{ a.score }}%</span>
+          {% endif %}
+        </div>
+        {% if a.missing %}
+        <p class="chips">{% for s in a.missing.split(",")[:4] %}<span>{{ s }}</span>{% endfor %}</p>
+        {% endif %}
+        <div class="card-foot">
+          <form method="post" action="/applications/{{ a.id }}/status">
+            <select name="status" onchange="this.form.submit()" aria-label="Move {{ a.company }}">
+              {% for s in statuses %}<option {{ "selected" if s == a.status }}>{{ s }}</option>{% endfor %}
+            </select>
+          </form>
+          <form method="post" action="/applications/{{ a.id }}/delete" onsubmit="return confirm('Delete this application?')">
+            <button class="link-danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </article>
+      {% else %}
+      <p class="empty">Nothing here yet.</p>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </section>
+
+  {% if gaps %}
+  <section class="gaps">
+    <h2>Skills to learn next</h2>
+    <p class="muted">The skills most often asked for in your job descriptions that are missing from your CV.</p>
+    <ul>{% for skill, n in gaps %}<li><span>{{ skill }}</span><i style="width: {{ (n / gaps[0][1] * 100)|round }}%"></i><b>{{ n }}</b></li>{% endfor %}</ul>
+  </section>
+  {% endif %}
+</main>
+{% endblock %}
